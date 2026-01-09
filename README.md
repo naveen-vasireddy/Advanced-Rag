@@ -45,9 +45,12 @@ We evaluate the system using Mean Reciprocal Rank, which measures how high up th
 
 ## Test Results
 
-| Question | Queries Used | Found at Rank | Reciprocal Rank (RR) | RRF Math Formula | Final MRR |
-| --- | --- | --- | --- | --- | --- |
-| Ryzen 5 Core Count311.003B Model RAM (4-bit) | 311.00 | 311.00 | 311.00 | 311.00 | 1.00 |
+| Question | Queries Used | Found at Rank | Reciprocal Rank (RR) |
+| :--- | :---: | :---: | :---: |
+| Ryzen 5 Core Count | 3 | 1 | 1.00 |
+| 3B Model RAM (4-bit) | 3 | 1 | 1.00 |
+| RRF Math Formula | 3 | 1 | 1.00 |
+| **Final MRR** | | | **1.00** |
 
 ## Project Structure
 
