@@ -1,5 +1,13 @@
 from agent_graph import rag_v2_agent
 from agent_state import AgentState
+import os
+import dotenv
+dotenv.load_dotenv()
+# Essential for Phase 2 tracing
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_ENDPOINT"] = "https://api.smith.langchain.com"
+os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY")
+os.environ["LANGCHAIN_PROJECT"] = "RAG-v2-Optimization" # Name your project
 
 if __name__ == "__main__":
     # Example question
