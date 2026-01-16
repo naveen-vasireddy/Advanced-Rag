@@ -4,6 +4,7 @@ from model import embeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 
+from retry_func import node_with_retry
 
 # Replace your 'docs' variable with this
 docs = [
@@ -27,16 +28,23 @@ docs = [
 vectorstore = Chroma.from_documents(docs, embeddings)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
-
 def retriver_node(state: AgentState):
-    print("Retrieving documents for rewritten queries.")
-    queries = state["rewritten_queries"]
-    print(f"\n🚀 System is using {len(queries)} specific queries:")
-    for i, q in enumerate(queries, 1):
-        print(f"   {i}. {q}")
+    def process(s):
+        queries = s["rewritten_queries"]
+        all_docs = []
+        for q in queries:
+            # Using try-except to handle individual retriever failures
+            try:
+                all_docs.append(retriever.invoke(q)) 
+            except Exception as e:
+                print(f"Warning: Retrieval failed for query '{q}': {e}")
+                continue
         
-    all_docs = []
-    for q in queries:
-        all_docs.append(retriever.invoke(q)) # Keep as lists of lists for RRF tomorrow
+        if not all_docs:
+            # Fallback: Use original question if all rewritten queries fail [5]
+            print("Fallback: Using original question for retrieval")
+            all_docs.append(retriever.invoke(s["question"]))
+            
+        return {"retrieved_docs": all_docs}
 
-    return {"retrieved_docs": all_docs}
+    return node_with_retry(process, state, "Retriever")
