@@ -4,6 +4,9 @@ from model import embeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 
+from schemas import RetrievalInput
+from pydantic import ValidationError
+
 from retry_func import node_with_retry
 
 # Replace your 'docs' variable with this
@@ -28,21 +31,32 @@ docs = [
 vectorstore = Chroma.from_documents(docs, embeddings)
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
+
 def retriver_node(state: AgentState):
     def process(s):
         queries = s["rewritten_queries"]
         all_docs = []
+
         for q in queries:
-            # Using try-except to handle individual retriever failures
             try:
-                all_docs.append(retriever.invoke(q)) 
+                # 1. Validate the input using Pydantic before usage
+                # This ensures 'q' meets length/content requirements defined in schema
+                validated_input = RetrievalInput(query=q, top_k=2)
+                
+                # 2. Use the validated query string
+                docs = retriever.invoke(validated_input.query)
+                all_docs.append(docs)
+                
+            except ValidationError as ve:
+                print(f"⚠️ Skipping invalid query '{q}': {ve}")
+                continue # Skip bad queries without crashing
             except Exception as e:
                 print(f"Warning: Retrieval failed for query '{q}': {e}")
                 continue
         
         if not all_docs:
-            # Fallback: Use original question if all rewritten queries fail [5]
-            print("Fallback: Using original question for retrieval")
+            print("Fallback: Using original question")
+            # Fallback also validated? Optional, but good practice.
             all_docs.append(retriever.invoke(s["question"]))
             
         return {"retrieved_docs": all_docs}
