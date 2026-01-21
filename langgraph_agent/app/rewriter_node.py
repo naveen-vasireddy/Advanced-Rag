@@ -1,5 +1,5 @@
 
-from model import llm
+from langgraph_agent.app.model import llm
 from schemas import QueryExpansion
 from decorators import validate_llm_output
 

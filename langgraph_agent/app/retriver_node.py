@@ -1,5 +1,5 @@
-from agent_state import AgentState
-from model import embeddings
+from langgraph_agent.app.agent_state import AgentState
+from langgraph_agent.app.model import embeddings
 
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
@@ -7,7 +7,7 @@ from langchain_core.documents import Document
 from schemas import RetrievalInput
 from pydantic import ValidationError
 
-from retry_func import node_with_retry
+from langgraph_agent.app.retry_func import node_with_retry
 
 # Replace your 'docs' variable with this
 docs = [
