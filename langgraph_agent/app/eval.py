@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI # Or your preferred high-reasoning LLM
 from langchain_core.prompts import ChatPromptTemplate
-from langgraph_agent.app.model import llm
+from app.model import llm
 
 # Define the scoring structure for the judge
 class RAGEvaluation(BaseModel):

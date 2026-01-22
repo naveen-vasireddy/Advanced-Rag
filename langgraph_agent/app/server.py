@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from langgraph_agent.app.agent_graph import rag_v2_agent # Import your compiled graph [2]
+from agent_graph import rag_v2_agent # Import your compiled graph [2]
 
 app = FastAPI(title="RAG v2.0 Agent API")
 

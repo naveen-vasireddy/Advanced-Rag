@@ -1,5 +1,5 @@
 
-from langgraph_agent.app.agent_state import AgentState
+from agent_state import AgentState
 
 
 def reranker_node(state: AgentState):
