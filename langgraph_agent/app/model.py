@@ -1,20 +1,26 @@
 import os
-from langchain_ollama import ChatOllama
-from langchain_ollama import OllamaEmbeddings
+from langchain_openai import ChatOpenAI     
+from langchain_openai.embeddings import OpenAIEmbeddings
+from dotenv import load_dotenv  # <-- Add this
+load_dotenv() 
 
-# Get the base URL from the environment, defaulting to localhost if not set
-ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-
-print(f"🔗 Connecting to Ollama at: {ollama_url}")
-
-# Pass the base_url to both the LLM and Embeddings
-llm = ChatOllama(
-    model="llama3.2:3b", 
-    base_url=ollama_url, 
-    temperature=0
+# 1. Setup the LLM (DeepSeek R1T2 Chimera via OpenRouter)
+# Ensure you have set OPENROUTER_API_KEY in your environment variables
+llm = ChatOpenAI(
+    model="tngtech/deepseek-r1t2-chimera:free",      # The specific free model ID
+    openai_api_key=os.getenv("OPENROUTER_API_KEY"),   # Your OpenRouter Key
+    openai_api_base="https://openrouter.ai/api/v1",   # OpenRouter Base URL
+    temperature=0.1                                   # Low temp is best for RAG/QnA
 )
 
-embeddings = OllamaEmbeddings(
-    model="all-minilm", 
-    base_url=ollama_url
+# 2. Setup Embeddings 
+# Since you aren't using Ollama, we use a free local model (Standard for RAG)
+# This downloads a small model to run locally without an API.
+embeddings = OpenAIEmbeddings(
+    model="openai/text-embedding-3-small", 
+    openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+    openai_api_base="https://openrouter.ai/api/v1",
+    check_embedding_ctx_length=False # Optional: bypasses local token counting
 )
+
+

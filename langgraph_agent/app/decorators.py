@@ -11,27 +11,40 @@ def validate_llm_output(schema: BaseModel):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            # 1. Get the raw string output from the LLM chain
+            # 1. Get the raw output from the wrapped function
             raw_response = func(*args, **kwargs)
-            
+
             try:
-                # 2. Extract JSON (Llama 3.2 often wraps code in ```json ... ```)
-                clean_json = raw_response.strip()
-                if "```json" in clean_json:
-                    clean_json = clean_json.split("```json")[3].split("```")
-                elif "```" in clean_json:
-                    clean_json = clean_json.split("```")[3].split("```")
-                
-                # 3. Parse and Validate
-                data_dict = json.loads(clean_json)
-                validated_object = schema(**data_dict)
-                
+                # If the wrapped function already returned a dict or BaseModel, use it directly
+                if isinstance(raw_response, dict):
+                    data_dict = raw_response
+                elif isinstance(raw_response, BaseModel):
+                    return raw_response
+                else:
+                    # Defensive string extraction
+                    clean_json = str(raw_response).strip()
+
+                    # If the LLM wrapped the JSON in a ```json block, extract the inner content
+                    if "```json" in clean_json:
+                        clean_json = clean_json.split("```json", 1)[1].split("```", 1)[0].strip()
+                    elif "```" in clean_json:
+                        clean_json = clean_json.split("```", 1)[1].split("```", 1)[0].strip()
+
+                    # Parse the JSON text to a Python dict
+                    data_dict = json.loads(clean_json)
+
+                # Instantiate/validate using the provided Pydantic schema
+                try:
+                    validated_object = schema(**data_dict)
+                except Exception:
+                    # Pydantic v2 compatibility fallback
+                    validated_object = schema.model_validate(data_dict)
+
                 return validated_object
-                
-            except (json.JSONDecodeError, ValidationError) as e:
+
+            except (json.JSONDecodeError, ValidationError, IndexError, AttributeError, Exception) as e:
                 print(f"❌ Validation Failed: {e}")
-                # Raising this triggers the Day 37-39 Retry Logic you built
-                raise e 
-                
+                print(f"   Raw Output was: {raw_response}")
+                raise e
         return wrapper
     return decorator
