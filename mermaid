@@ -1,0 +1,53 @@
+graph TD
+    %% STYLES
+    classDef user fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef secure fill:#e1f5fe,stroke:#0277bd,stroke-width:2px;
+    classDef external fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+    classDef db fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+
+    %% NODES
+    User((👤 User / Client)):::user
+    
+    subgraph "🔐 Secure Production Container (Docker)"
+        API["⚡ FastAPI Endpoint"]:::secure
+        
+        subgraph "Middleware Layer"
+            Redact["🛡️ PII Redaction Agent<br/>(Presidio)"]:::secure
+            Restore["🔄 Deanonymizer<br/>(Token Swap)"]:::secure
+        end
+        
+        subgraph "Cognitive Layer"
+            Agent["🤖 LangGraph Agent<br/>(State Management)"]:::secure
+            Memory["🧠 Short-Term Memory<br/>(Redis / Dict)"]:::secure
+        end
+    end
+
+    subgraph "☁️ External Services"
+        LLM["🧠 OpenAI / Anthropic<br/>(Model Provider)"]:::external
+        LangSmith["🐞 LangSmith<br/>(Tracing & Eval)"]:::external
+        VectorDB[("🗄️ Vector DB<br/>Postgres / Chroma")]:::db
+    end
+
+    %% FLOW
+    User -- "1. POST /chat (Raw PII)" --> API
+    API -- "2. Raw Text" --> Redact
+    
+    Redact -- "3. Store Mapping {Token: RealData}" --> Memory
+    Redact -- "4. Sanitized Text (<PERSON_1>)" --> Agent
+    
+    Agent -- "5. Retrieve Context" --> VectorDB
+    VectorDB -- "6. Documents" --> Agent
+    
+    Agent -- "7. Prompt (Redacted)" --> LLM
+    LLM -- "8. Response (Redacted)" --> Agent
+    
+    Agent -- "9. Log Run" --> LangSmith
+    Agent -- "10. Final Answer (Redacted)" --> Restore
+    
+    Memory -. "11. Fetch Real Data" .-> Restore
+    Restore -- "12. JSON Response" --> API
+    API -- "13. Final Answer" --> User
+
+    %% NOTES
+    linkStyle 6 stroke:red,stroke-width:2px;
+    linkStyle 7 stroke:red,stroke-width:2px;
