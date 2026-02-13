@@ -1,0 +1,15 @@
+B. Infrastructure Spec (Docker Compose Strategy)
+This defines how the pieces run together.
+• Service 1: agent_api (FastAPI + LangGraph + Presidio)
+    ◦ Port: 8000
+    ◦ Env Vars: OPENAI_API_KEY, LANGCHAIN_API_KEY, REDIS_URL
+    ◦ Volume: None (Stateless)
+• Service 2: vector_db (Postgres/pgvector)
+    ◦ Port: 5432
+    ◦ Volume: ./pg_data:/var/lib/postgresql/data (Persistent)
+• Service 3: cache (Redis)
+    ◦ Port: 6379
+    ◦ Purpose: Stores LangGraph Checkpoint state and Day 56 PII_Mapping.
+C. Security Spec
+• Secret Management: All keys (OPENAI_KEY) must be injected via .env file or Cloud Secret Manager (if on AWS/GCP).
+• PII Rule: "The agent_api container must never log the field AgentRequest.query to stdout. It must only log the redacted version."
